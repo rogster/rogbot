@@ -2,6 +2,7 @@ require 'discordrb'
 require 'yaml'
 require 'nokogiri'
 require 'open-uri'
+require 'terminal-table'
 
 #load token
 CONFIG = YAML.load_file('yaml/config.yaml')
@@ -38,9 +39,6 @@ end
 
 # r!stats <username> [stat_to_search]
 # 	-returns an ascii representation of the total stats or a [stat_to_search]
-
-# 	TODO
-# 	-Fix formatting
 bot.command(:stats) do |event|
 	base_query = "http://services.runescape.com/m=hiscore_oldschool/hiscorepersonal.ws?user1="
 	user_to_search = event.message.content.slice("r!stats ".length..-1) #looks past the command
@@ -51,22 +49,21 @@ bot.command(:stats) do |event|
 		return
 	end
 	hiscores_rows = hiscores_div.css('tr')
-	stat_string = StringIO.new
-	stat_string << "\u{200b}\n- **Skill** ----- **Rank** ------ **Level** ---------- **XP** ---\n"
+	stat_display_rows = []
 	hiscores_rows.each_with_index do |row, index|
 	    next if index < 3
 	    break if index > 26
-	    row.css('td').each_with_index do |column, index2|
-	        if index2 == 0
-				stat_string << "| "
-			else
-	            stat_string << '%-13.13s' % "#{column.text.strip}"
-			end
+		stat_display_columns = []
+	    row.css('td').each_with_index do |column, index_inner|
+	        next if index_inner == 0
+			value = column.text.strip
+	        stat_display_columns << value
 	    end
-	    stat_string << "|\n"
+		stat_display_rows << stat_display_columns
 	end
-	stat_string << "--------------------------------------------------\n"
-	event.respond(stat_string.string)
+	table = Terminal::Table.new :title => "Stats for #{user_to_search}",
+		:headings => ["Skill", "Rank", "Level", "Exp"], :rows => stat_display_rows
+	event.respond("```\u{200b}\n#{table}```")
 end
 
 
