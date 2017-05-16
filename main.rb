@@ -41,10 +41,9 @@ end
 
 # 	TODO
 # 	-Fix formatting
-# 	-Allow for multiple-word names
 bot.command(:stats) do |event|
 	base_query = "http://services.runescape.com/m=hiscore_oldschool/hiscorepersonal.ws?user1="
-	user_to_search = event.message.content.split(' ').slice(1)
+	user_to_search = event.message.content.slice("r!stats ".length..-1) #looks past the command
 	doc = Nokogiri::HTML(open(base_query+user_to_search))
 	hiscores_div = doc.css("#contentHiscores")[0]
 	if hiscores_div.at_css('div')
