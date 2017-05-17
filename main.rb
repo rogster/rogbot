@@ -17,9 +17,10 @@ command_descs = Hash.new
 command_descs["r!dog"] = 'Posts a random dog image'
 command_descs["r!spurdo"] = 'Posts a random spurdo image'
 command_descs["r!duck"] = 'Posts a random duck image'
+command_descs["r!stats *user*"] = "Fetches the OSRS hiscores for *user*. If no user is given it will use your nickname"
 
 commands_string = StringIO.new
-commands_string << "\nList of commands:\n"
+commands_string << "\u{200b}\n__List of commands:__\n"
 command_descs.each do |key, value|
 	commands_string << "**#{key}**\t-\t#{value}\n"
 end
@@ -41,7 +42,12 @@ end
 # 	-returns an ascii representation of the total stats or a [stat_to_search]
 bot.command(:stats) do |event|
 	base_query = "http://services.runescape.com/m=hiscore_oldschool/hiscorepersonal.ws?user1="
-	user_to_search = event.message.content.slice("r!stats ".length..-1) #looks past the command
+	if event.message.content.split(' ').length == 1 # if no argument given use nickname
+		user_to_search = event.author.username.to_s
+	else
+		user_to_search = event.message.content.slice("r!stats ".length..-1) # looks past the command
+	end
+	puts base_query, user_to_search
 	doc = Nokogiri::HTML(open(base_query+user_to_search))
 	hiscores_div = doc.css("#contentHiscores")[0]
 	if hiscores_div.at_css('div')
