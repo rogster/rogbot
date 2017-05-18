@@ -15,6 +15,9 @@ CONFIG = YAML.load_file('yaml/config.yaml')
 # initialise bot
 bot = Discordrb::Commands::CommandBot.new token: CONFIG['token'], client_id: CONFIG['client_id'], prefix: 'r!'
 
+# rate limiting
+bot.bucket :images, limit: 3, time_span: 60, delay: 10
+
 
 # build the string for r!commands
 command_descs = Hash.new
@@ -42,11 +45,10 @@ end
 
 
 # r!wiki
-# 	-retrieves a link
+# 	-retrieves a link from the 2007scape wiki (temperamental -some url's case-sensitive
 bot.command(:wiki, chain_usable: false) do |event|
 	query = event.message.content.slice("r!wiki ".length..-1).gsub(' ', '_')
 	search_base = "http://2007.runescape.wikia.com/wiki/"
-	puts search_base+query
 	event.respond(search_base+query)
 end
 
@@ -114,7 +116,7 @@ end
 
 # r!dog
 #	-posts a dog from ./dogs
-bot.command(:dog, description: 'Posts a random dog image', chain_usable: false) do |event|
+bot.command(:dog, bucket: :images, rate_limit_message: 'pls no spam', description: 'Posts a random dog image', chain_usable: false) do |event|
 	folder = './dogs/'
 	dogs = Dir.entries(folder)
 	file = open(folder+dogs[rand(2...dogs.length)], 'r')
@@ -124,7 +126,7 @@ end
 
 # r!spurdo
 #  -posts a random image from ./spurdo based on the name
-bot.command(:spurdo, description: 'Posts a random spurdo image',
+bot.command(:spurdo, bucket: :images, rate_limit_message: 'pls no spam', description: 'Posts a random spurdo image',
 chain_usable: false) do |event|
 	folder = './spurdo/'
 	spurdos = Dir.entries(folder)
@@ -134,8 +136,8 @@ end
 
 
 # r!duck
-# 	-posts a random cidnaduck
-bot.command(:duck, description: 'Posts a random duck image', chain_usable: false) do |event|
+# 	-posts a random duck
+bot.command(:duck, bucket: :images, rate_limit_message: 'pls no spam', description: 'Posts a random duck image', chain_usable: false) do |event|
 	folder = './duck/'
 	ducks = Dir.entries(folder)
 	file = open(folder+ducks[rand(2...ducks.length)], 'r')
