@@ -4,6 +4,10 @@ require 'nokogiri'
 require 'open-uri'
 require 'terminal-table'
 
+# TODO
+# 	-modularise r!stats searches
+ 	
+
 #load token
 CONFIG = YAML.load_file('yaml/config.yaml')
 
@@ -18,6 +22,7 @@ command_descs["r!dog"] = 'Posts a random dog image.'
 command_descs["r!spurdo"] = 'Posts a random spurdo image.'
 command_descs["r!duck"] = 'Posts a random duck image.'
 command_descs["r!stats [user] [skill]"] = "Fetches the OSRS hiscores for [user]. If no [user] is given it will use your nickname. [skill] is optional, and will only work if [user] is not specified."
+command_descs["r!wiki"] = "Retrieves a wiki link for the text following the command"
 
 commands_string = StringIO.new
 commands_string << "\u{200b}\n__List of commands:__\n"
@@ -36,8 +41,22 @@ bot.command(:commands, chain_usable: false) do |event|
 end
 
 
+# r!wiki
+# 	-retrieves a link
+bot.command(:wiki, chain_usable: false) do |event|
+	query = event.message.content.slice("r!wiki ".length..-1).gsub(' ', '_')
+	search_base = "http://2007.runescape.wikia.com/wiki/"
+	puts search_base+query
+	event.respond(search_base+query)
+end
+
+
 # stats array for r!stats
 skills = ['overall', 'attack', 'defence', 'strength', 'hitpoints', 'ranged', 'prayer', 'magic', 'cooking', 'woodcutting', 'fletching', 'fishing', 'firemaking', 'crafting', 'smithing', 'mining', 'herblore', 'agility', 'thieving', 'slayer', 'farming', 'runecrafting', 'hunter', 'construction']
+
+def do_search(user, stat=nil)
+
+end
 
 # r!stats <username> [stat_to_search]
 # 	-returns an ascii representation of the total stats or a [stat_to_search]
@@ -46,11 +65,10 @@ bot.command(:stats) do |event|
 	split_string = event.message.content.split(' ')
 	if split_string.length == 1 # if no argument given use nickname
 		user_to_search = event.author.username
-		puts "no user specified"
 	else
 		# looks past the command
 		user_to_search = event.message.content.slice("r!stats ".length..-1) 
-		last_word = user_to_search.split(' ').slice(-1)
+		last_word = user_to_search.split(' ').slice(-1).downcase
 		if skills.include? last_word
 			user_to_search = user_to_search.slice(0..-(last_word.length+1))
 			skill_to_search = last_word
@@ -66,8 +84,6 @@ bot.command(:stats) do |event|
 	stat_display_rows = []
 	if nil != skill_to_search
 			skill_index = skills.index(skill_to_search) + 3 
-			puts skill_index
-			puts hiscores_rows[skill_index].text
 			stat_display_columns = []
 	    	hiscores_rows[skill_index].css('td').each_with_index do |column, index|
 		        next if index == 0 || index == 2 #skip pad cell and rank cell
