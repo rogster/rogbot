@@ -3,6 +3,7 @@ require 'yaml'
 require 'nokogiri'
 require 'open-uri'
 require 'terminal-table'
+require 'date'
 
 # TODO
 # 	-modularise r!stats searches
@@ -17,6 +18,7 @@ bot = Discordrb::Commands::CommandBot.new token: CONFIG['token'], client_id: CON
 
 # rate limiting
 bot.bucket :images, limit: 3, time_span: 60, delay: 10
+bot.bucket :dwh, limit: 1, time_span: 60, delay: 864000
 
 
 # build the string for r!commands
@@ -25,7 +27,7 @@ command_descs["r!dog"] = 'Posts a random dog image.'
 command_descs["r!spurdo"] = 'Posts a random spurdo image.'
 command_descs["r!duck"] = 'Posts a random duck image.'
 command_descs["r!stats [user] [skill]"] = "Fetches the OSRS hiscores for [user]. If no [user] is given it will use your nickname. [skill] is optional, and will only work if [user] is not specified."
-command_descs["r!wiki"] = "Retrieves a wiki link for the text following the command"
+command_descs["r!wiki"] = "Retrieves a 2007scape wiki link for the text following the command"
 
 commands_string = StringIO.new
 commands_string << "\u{200b}\n__List of commands:__\n"
@@ -110,7 +112,30 @@ bot.command(:stats) do |event|
 	end
 	table = Terminal::Table.new :title => "Stats for #{user_to_search}",
 		:headings => ["Skill", "Level", "Exp"], :rows => stat_display_rows
-	event.respond("```\u{200b}\n#{table}```")
+	event.respond("```#{table}```")
+end
+
+
+# r!dwh
+# 	-tells when user will get a dwh
+bot.command(:dwh, bucket: :dwh) do |event|
+	# if cidna always return never
+	if (event.author.id ==  154028186643070976)
+		event.respond('Never')
+		return
+	end
+	number = rand(0..3)
+	case number 
+		when 0
+			answer = 'Never'
+		when 1
+			answer = 'Today'
+		when 2
+			answer = 'Within a week'
+		when 3
+			answer = 'Tomorrow'
+	end
+	event.respond(answer)
 end
 
 
@@ -143,6 +168,17 @@ bot.command(:duck, bucket: :images, rate_limit_message: 'pls no spam', descripti
 	file = open(folder+ducks[rand(2...ducks.length)], 'r')
 	event.send_file(file)
 end
+
+
+# autosaves images
+=begin
+bot.message(:in '313156626091737088') do |message|
+	if !message.attachments.empty?
+		filename = message.author+DateTime.now.strftime("%F%T")
+		
+	end
+end
+=end
 
 
 # welcomes new members
