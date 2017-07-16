@@ -18,7 +18,7 @@ bot = Discordrb::Commands::CommandBot.new token: CONFIG['token'], client_id: CON
 
 # rate limiting
 bot.bucket :images, limit: 3, time_span: 60, delay: 10
-bot.bucket :dwh, limit: 1, time_span: 60, delay: 864000
+bot.bucket :dwh, limit: 3, time_span: 60, delay: 600 
 
 
 # build the string for r!commands
@@ -43,6 +43,11 @@ bot.set_user_permission(216784364799918081, 1)
 # 	-gives information about public commands
 bot.command(:commands, chain_usable: false) do |event|
 	event.respond(commands_string.string)
+end
+
+# r!roll
+bot.command(:roll) do |event|
+	event.respond(rand(0..100))
 end
 
 
@@ -168,6 +173,27 @@ bot.command(:duck, bucket: :images, rate_limit_message: 'pls no spam', descripti
 	file = open(folder+ducks[rand(2...ducks.length)], 'r')
 	event.send_file(file)
 end
+
+
+=begin
+# sets up points file
+if file?./duck_points.txt
+	duckpoints = open(./duckpoints.txt, 'rw')
+else
+
+
+# r!duckgame [type]
+# 	-posts a random duck and awards points if guessed successfully
+bot.command(:duckgame, description: 'Posts a random duck, awards a point if the user guesses the duck correctly. Ducks are:') do |event|		
+	folder = './duck/'
+	ducks = Dir.entries(folder)
+	file = open(folder+ducks[rand(2...ducks.length)], 'r')
+	guess = event.message.content.slice('r!duckgame '.length, -1)
+	puts guess
+	if File.basename file, extn == guess
+	event.send_file(file)
+end
+=end
 
 
 # autosaves images
