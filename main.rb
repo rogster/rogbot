@@ -121,9 +121,9 @@ bot.command(:stats) do |event|
 end
 
 
-# r!dwh
-# 	-tells when user will get a dwh
-bot.command(:dwh, bucket: :dwh) do |event|
+# r!tbow
+# 	-tells when user will get a tbow
+bot.command(:tbow, bucket: :tbow) do |event|
 	# if cidna always return never
 	if (event.author.id ==  154028186643070976)
 		event.respond('Never')
@@ -134,11 +134,11 @@ bot.command(:dwh, bucket: :dwh) do |event|
 		when 0
 			answer = 'Never'
 		when 1
-			answer = 'Today'
+			answer = 'Next raid'
 		when 2
-			answer = 'Within a week'
+			answer = 'Within the next 10 raids'
 		when 3
-			answer = 'Tomorrow'
+			answer = 'Within the next 100 raids'
 	end
 	event.respond(answer)
 end
@@ -150,6 +150,13 @@ bot.command(:dog, bucket: :images, rate_limit_message: 'pls no spam', descriptio
 	folder = './dogs/'
 	dogs = Dir.entries(folder)
 	file = open(folder+dogs[rand(2...dogs.length)], 'r')
+	event.send_file(file)
+end
+
+# r!dab
+#    -posts a big dab
+bot.command(:dab, bucket: :images, rate_limit_message: 'pls no spam') do |event|
+	file = open('./dab.png', 'r')
 	event.send_file(file)
 end
 
@@ -209,7 +216,7 @@ end
 
 # welcomes new members
 bot.member_join do |event|
-	bot.send_message("312958603248271363", "Hello <@#{event.user.id}>, a <@&312965121653866497> or <@&312965242931904523> will be along shortly to give you permissions")
+	bot.send_message("312958603248271363", "Hello <@#{event.user.id}>, a <@&312965121653866497> will be along shortly to give you permissions")
 end
 
 

@@ -1,0 +1,7 @@
+#ignore images
+*.png
+*.gif
+*.jpg
+
+#ignore bot token
+*.yaml
