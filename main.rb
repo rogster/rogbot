@@ -120,6 +120,7 @@ bot.command(:stats) do |event|
 
 			stat_display_columns << value
 		end
+		end
 		stat_display_rows << stat_display_columns
 		table = Terminal::Table.new :rows => stat_display_rows
 		event.respond("#{skill_to_search.capitalize} level for **#{user_to_search}**:\n```#{table}```")
@@ -129,9 +130,11 @@ bot.command(:stats) do |event|
 	    next if index < 3
 	    break if index > 26
 		stat_display_columns = []
-	    row.css('td').each_with_index do |column, index_inner|			    next if index_inner == 0 || index_inner == 2 #skip pad cell and rank cell
+	    row.css('td').each_with_index do |column, index_inner|
+		next if index_inner == 0 || index_inner == 2 #skip pad cell and rank cell
 		value = column.text.strip
 	        stat_display_columns << value
+	    end
 		stat_display_rows << stat_display_columns
 	end
 	table = Terminal::Table.new :title => "Stats for #{user_to_search}",
