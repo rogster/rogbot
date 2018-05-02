@@ -17,7 +17,7 @@ CONFIG = YAML.load_file('yaml/config.yaml')
 bot = Discordrb::Commands::CommandBot.new token: CONFIG['token'], client_id: CONFIG['client_id'], prefix: 'r!'
 
 # rate limiting
-bot.bucket :images, limit: 3, time_span: 60, delay: 10
+bot.bucket :images, limit: 5, time_span: 3, delay: 3
 bot.bucket :dwh, limit: 3, time_span: 60, delay: 600 
 
 
@@ -50,6 +50,9 @@ bot.command(:roll) do |event|
 	event.respond(rand(0..100))
 end
 
+bot.command(:roll3) do |event|
+	event.respond(rand(0..1000))
+end
 
 # r!wiki
 # 	-retrieves a link from the 2007scape wiki (temperamental -some url's case-sensitive
@@ -71,19 +74,31 @@ end
 # 	-returns an ascii representation of the total stats or a [stat_to_search]
 bot.command(:stats) do |event|
 	base_query = "http://services.runescape.com/m=hiscore_oldschool/hiscorepersonal.ws?user1="
-	split_string = event.message.content.split(' ')
+
+	origin = event.message.content
+	split_string = origin.split(' ')
+
 	if split_string.length == 1 # if no argument given use nickname
 		user_to_search = event.author.username
 	else
 		# looks past the command
-		user_to_search = event.message.content.slice("r!stats ".length..-1) 
-		last_word = user_to_search.split(' ').slice(-1).downcase
-		if skills.include? last_word
-			user_to_search = user_to_search.slice(0..-(last_word.length+1))
-			skill_to_search = last_word
+	#removes r!stats
+		user_to_search = origin.slice!(8..-1)
+		if user_to_search.include? " "
+			last_word = user_to_search.split(' ').slice(-1).downcase
+			if skills.include? last_word
+				user_to_search = user_to_search.slice(
+						0..-(last_word.length+2))
+				skill_to_search = last_word
+				original_user_to_search = user_to_search
+			end
+			if user_to_search.include? " "
+				user_to_search.gsub! " ", "%A0"
+			end 
 		end
 	end
 	doc = Nokogiri::HTML(open(base_query+user_to_search)) #parse jagex' hiscores
+	user_to_search = user_to_search.gsub("%A0", " ")
 	hiscores_div = doc.css("#contentHiscores")[0]
 	if hiscores_div.at_css('div')
 		event.respond('Player not found, did you spell the username correctly?')
@@ -92,27 +107,31 @@ bot.command(:stats) do |event|
 	hiscores_rows = hiscores_div.css('tr')
 	stat_display_rows = []
 	if nil != skill_to_search
-			skill_index = skills.index(skill_to_search) + 3 
-			stat_display_columns = []
-	    	hiscores_rows[skill_index].css('td').each_with_index do |column, index|
-		        next if index == 0 || index == 2 #skip pad cell and rank cell
-				value = column.text.strip
-		        stat_display_columns << value
-		    end
-			stat_display_rows << stat_display_columns
-			table = Terminal::Table.new :rows => stat_display_rows
-			event.respond("#{skill_to_search.capitalize} level for **#{user_to_search}**:\n```#{table}```")
+		hiscores_rows.each_with_index do |row, index|
+		skill_index = skills.index(skill_to_search) + 3 
+		
+		stat_display_columns = []
+		target_row = hiscores_rows[skill_index]	
+	    	target_row.css('td').each_with_index do |column, index|
+
+		#skip pad cell and rank cell
+		next if index == 0 || index == 2
+			value = column.text.strip
+
+			stat_display_columns << value
+		end
+		stat_display_rows << stat_display_columns
+		table = Terminal::Table.new :rows => stat_display_rows
+		event.respond("#{skill_to_search.capitalize} level for **#{user_to_search}**:\n```#{table}```")
 			return
 	end
 	hiscores_rows.each_with_index do |row, index|
 	    next if index < 3
 	    break if index > 26
 		stat_display_columns = []
-	    row.css('td').each_with_index do |column, index_inner|
-	        next if index_inner == 0 || index_inner == 2 #skip pad cell and rank cell
-			value = column.text.strip
+	    row.css('td').each_with_index do |column, index_inner|			    next if index_inner == 0 || index_inner == 2 #skip pad cell and rank cell
+		value = column.text.strip
 	        stat_display_columns << value
-	    end
 		stat_display_rows << stat_display_columns
 	end
 	table = Terminal::Table.new :title => "Stats for #{user_to_search}",
@@ -226,3 +245,4 @@ bot.command(:clear, chain_usable: false, permission_level: 1) do |event|
 end
 
 bot.run
+
